@@ -15,9 +15,6 @@ fs.readFile('users.txt', (err, data) => {
     console.log(listOfUsers)
 });
 
-
-
-
 async function getNewUser(user, usersliced, channel) {
     var result = await doesUserExist(user, usersliced);
     if (result == 1) {
@@ -55,49 +52,52 @@ function getUserData(user) {
     })
 }
 
-
 function printStats(user, channel) {
     fs.readFile('users/' + user, (err, data) => {
         data = JSON.parse(data);
-        
-        channel.send({
-            embed: {
-                color: 3447003,
-                title: (user.charAt(0).toUpperCase() + user.slice(1) + "'s PVP Stats"),
-                description: "These stats are from all characters combined.",
-                fields: [{
-                    name: "Kills",
-                    value: data.data.mergedAllCharacters.results.allPvP.allTime.kills.basic.value
-                }, {
-                    name: "Assists",
-                    value: data.data.mergedAllCharacters.results.allPvP.allTime.assists.basic.value
-                }, {
-                    name: "Deaths",
-                    value: data.data.mergedAllCharacters.results.allPvP.allTime.deaths.basic.value
-                }, {
-                    name: "K/D",
-                    value: (data.data.mergedAllCharacters.results.allPvP.allTime.kills.basic.value / data.data.mergedAllCharacters.results.allPvP.allTime.deaths.basic.value).toFixed(3)
-                }, {
-                    name: "Headshot Kills",
-                    value: data.data.mergedAllCharacters.results.allPvP.allTime.precisionKills.basic.value
-                }, {
-                    name: "Revives",
-                    value: data.data.mergedAllCharacters.results.allPvP.allTime.resurrectionsPerformed.basic.value
-                }, {
-                    name: "Suicides",
-                    value: data.data.mergedAllCharacters.results.allPvP.allTime.suicides.basic.value
-                }, {
-                    name: "W/L ratio",
-                    value: data.data.mergedAllCharacters.results.allPvP.allTime.winLossRatio.basic.displayValue
-                }, {
-                    name: "Longest Killing Spree",
-                    value: data.data.mergedAllCharacters.results.allPvP.allTime.longestKillSpree.basic.value
-                }, {
-                    name: "Highest Light Level",
-                    value: data.data.mergedAllCharacters.results.allPvP.allTime.highestLightLevel.basic.value
-                }]
-            }
-        });
+        console.log(data)
+        try {
+            channel.send({
+                embed: {
+                    color: 3447003,
+                    title: (user.charAt(0).toUpperCase() + user.slice(1) + "'s PVP Stats"),
+                    description: "These stats are from all characters combined.",
+                    fields: [{
+                        name: "Kills",
+                        value: data.data.mergedAllCharacters.results.allPvP.allTime.kills.basic.value
+                    }, {
+                        name: "Assists",
+                        value: data.data.mergedAllCharacters.results.allPvP.allTime.assists.basic.value
+                    }, {
+                        name: "Deaths",
+                        value: data.data.mergedAllCharacters.results.allPvP.allTime.deaths.basic.value
+                    }, {
+                        name: "K/D",
+                        value: (data.data.mergedAllCharacters.results.allPvP.allTime.kills.basic.value / data.data.mergedAllCharacters.results.allPvP.allTime.deaths.basic.value).toFixed(3)
+                    }, {
+                        name: "Headshot Kills",
+                        value: data.data.mergedAllCharacters.results.allPvP.allTime.precisionKills.basic.value
+                    }, {
+                        name: "Revives",
+                        value: data.data.mergedAllCharacters.results.allPvP.allTime.resurrectionsPerformed.basic.value
+                    }, {
+                        name: "Suicides",
+                        value: data.data.mergedAllCharacters.results.allPvP.allTime.suicides.basic.value
+                    }, {
+                        name: "W/L ratio",
+                        value: data.data.mergedAllCharacters.results.allPvP.allTime.winLossRatio.basic.displayValue
+                    }, {
+                        name: "Longest Killing Spree",
+                        value: data.data.mergedAllCharacters.results.allPvP.allTime.longestKillSpree.basic.value
+                    }, {
+                        name: "Highest Light Level",
+                        value: data.data.mergedAllCharacters.results.allPvP.allTime.highestLightLevel.basic.value
+                    }]
+                }
+            });
+        } catch (err) {
+            channel.send("The user hasn't played any PVP yet.")
+        }
     });
 }
 
@@ -115,9 +115,11 @@ function doesUserExist(user, usersliced) {
             if (results.length == 0) {
                 resolve(0)
             }
+            var stop = 0
             for (i in results) {
                 try {
                     if (results[i]["blizzardDisplayName"].toLowerCase() == user) {
+                        stop = 1
                         var newUser = {}
                         newUser["battletag"] = user
                         newUser["membershipId"] = results[i]["membershipId"];
@@ -139,14 +141,14 @@ function doesUserExist(user, usersliced) {
                         });
 
                     } else {
-                        if (i == results.length - 1) {
+                        if ((i == results.length - 1) && (stop == 0)) {
                             resolve(0);
                         }
                     }
                 } catch (err) {
-                	if (i == results.length - 1) {
-                         resolve(0);
-                        }
+                    if ((i == results.length - 1) && (stop == 0)) {
+                        resolve(0);
+                    }
                 }
             };
         });
@@ -162,8 +164,6 @@ setInterval(function() {
         counter = 0;
     }
 }, 5000);
-
-
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -189,7 +189,6 @@ client.on('message', msg => {
             printStats(nameSliced, msg.channel)
         }
     }
-
 });
 
 client.login(token);
