@@ -24,14 +24,15 @@ async function getNewUser(user, usersliced, channel) {
             console.log(usersliced + " was added to the list.");
         });
         var output = await getUserData(usersliced);
-        printStats(user, channel);
+        console.log(output, "did it work")
+        printStats(usersliced, channel);
     } else {
         channel.send("User not found.");
     }
 }
 
 function getUserData(user) {
-    var promise = new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         fs.readFile('users/' + user, (err, data) => {
             if (err) throw err;
             data = JSON.parse(data);
@@ -54,8 +55,9 @@ function getUserData(user) {
 
 function printStats(user, channel) {
     fs.readFile('users/' + user, (err, data) => {
+        console.log(user, data)
         data = JSON.parse(data);
-        console.log(data)
+
         try {
             channel.send({
                 embed: {
@@ -104,7 +106,7 @@ function printStats(user, channel) {
 function doesUserExist(user, usersliced) {
     return new Promise(function(resolve, reject) {
         var options = {
-            url: 'https://www.bungie.net/Platform/User/SearchUsers/?q=' + user,
+            url: 'https://www.bungie.net/Platform/Destiny2/SearchDestinyPlayer/4/' + encodeURIComponent(user),
             headers: {
                 'X-API-Key': apikey
             }
@@ -115,45 +117,36 @@ function doesUserExist(user, usersliced) {
             if (results.length == 0) {
                 resolve(0)
             }
-            var stop = 0
-            for (i in results) {
-                try {
-                    if (results[i]["blizzardDisplayName"].toLowerCase() == user) {
-                        stop = 1
-                        var newUser = {}
-                        newUser["battletag"] = user
-                        newUser["membershipId"] = results[i]["membershipId"];
+            try {
+                var newUser = {}
+                newUser["battletag"] = user
+                newUser["membershipId"] = results[0]["membershipId"];
 
-                        var options = {
-                            url: 'https://www.bungie.net/Platform/User/GetMembershipsById/' + results[i]["membershipId"] + '/-1/',
-                            headers: {
-                                'X-API-Key': apikey
-                            }
-                        };
-                        request(options, function(error, response, body) {
-                            body = JSON.parse(body);
-                            newUser["destinyMembershipId"] = body.Response.destinyMemberships[0].membershipId;
-
-                            fs.writeFile("users/" + usersliced, JSON.stringify(newUser, null, 4), (err) => {
-                                if (err) throw err;
-                            });
-                            resolve(1);
-                        });
-
-                    } else {
-                        if ((i == results.length - 1) && (stop == 0)) {
-                            resolve(0);
+                var options = {
+                    url: 'https://www.bungie.net/Platform/User/GetMembershipsById/' + results[0]["membershipId"] + '/-1/',
+                    headers: {
+                        'X-API-Key': apikey
+                    }
+                };
+                request(options, function(error, response, body) {
+                    body = JSON.parse(body);
+                    for (i in body.Response.destinyMemberships) {
+                        if (body.Response.destinyMemberships[i].membershipType == 4) {
+                            newUser["destinyMembershipId"] = body.Response.destinyMemberships[i].membershipId
                         }
                     }
-                } catch (err) {
-                    if ((i == results.length - 1) && (stop == 0)) {
-                        resolve(0);
-                    }
-                }
-            };
+                    fs.writeFile("users/" + usersliced, JSON.stringify(newUser, null, 4), (err) => {
+                        if (err) throw err;
+                        resolve(1);
+                    });
+
+                });
+            } catch (err) {
+                resolve(0);
+            }
         });
     });
-};
+}
 
 var counter = 0;
 
