@@ -37,7 +37,7 @@ function getUserData(user) {
             if (err) throw err;
             data = JSON.parse(data);
             var options = {
-                url: 'https://www.bungie.net/platform/sadlksadkjfgDestiny2/4/Account/' + data['destinyMembershipId'] + '/Stats/',
+                url: 'https://www.bungie.net/platform/3274623765423784Destiny2/4/Account/' + data['destinyMembershipId'] + '/Stats/',
                 headers: {
                     'X-API-Key': apikey
                 }
